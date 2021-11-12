@@ -14,6 +14,7 @@ def ImportData(filename):
 
 	return n, tau, dataList
 
+# Find the message's index based on the priority
 def PriorityFindMessageLocation(prior, localDataList, n):
 	idx = 0
 	for x in range(n):
@@ -54,24 +55,15 @@ def CalculateResponse(index, n, tau, localDataList):
 	return float(R), isViolate
 
 
+# Swap two messages' priority
 def SwapPriority(n, localDataList):
 	tempDataList = copy.deepcopy(localDataList)
 	# Random select two priority to swap
 	x, y = random.sample(priorityList, 2)
 	tempDataList[x][0], tempDataList[y][0] = tempDataList[y][0], tempDataList[x][0] # Swap two messages' priority
-	print(f'Swap {x} and {y}')
+	# print(f'Swap {x} and {y}')
 	return tempDataList
 
-def SwapPriorityNear(n, localDataList):
-	tempDataList = copy.deepcopy(localDataList)
-	# Random select two priority to swap
-	x = random.choice(priorityList)
-	if int(x) < n-1:
-		tempDataList[x][0], tempDataList[x+1][0] = tempDataList[x+1][0], tempDataList[x][0] # Swap two messages' priority
-	else:
-		tempDataList[x][0], tempDataList[x-1][0] = tempDataList[x-1][0], tempDataList[x][0]
-	print(f'Swap {x} and {x+1}')
-	return tempDataList
 
 
 if __name__ == '__main__':
@@ -81,8 +73,8 @@ if __name__ == '__main__':
 
 	# Summation of the worst-case response times of all messages. The objective is to minimize it.
 	summation, newSummation = 0, 0
-	T = 100000000
-	reduceRate = 0.4
+	T = 10000000000
+	reduceRate = 0.1
 	isResponseViolate = False
 	finalOutput = 0
 
@@ -95,12 +87,12 @@ if __name__ == '__main__':
 			print("Constraint violation")
 			sys.exit()
 	finalOutput = summation
-	print(f'Origin sum = {summation}\n')
+	# print(f'Origin sum = {summation}\n')
 
 
+	### -------- Simulated Annealing --------
 	while T > 0:
 		newDataList = SwapPriority(n, dataList)
-		# newDataList = SwapPriorityNear(n, dataList)
 		tempR = 0
 		newSummation = 0
 		isResponseViolate = False
@@ -115,11 +107,11 @@ if __name__ == '__main__':
 
 		newSummation = round(newSummation, 2)
 
-		# "down-hill" move
+		### -------- "down-hill" move --------
 		if newSummation <= summation:
 			# Violated the constraint, make it harder to go down hill in this direction
 			if isResponseViolate:
-				print("Constraint violation")
+				# print("Constraint violation")
 				T = T * reduceRate
 				continue
 				# prob = min(math.exp(-(summation-newSummation)*10000/T), 1)
@@ -129,25 +121,22 @@ if __name__ == '__main__':
 
 			dataList = copy.deepcopy(newDataList)
 			summation = newSummation
-			print(f'downhill: {summation}')
+			# print(f'downhill: {summation}')
 
 			if isResponseViolate == False and finalOutput > summation:
 				finalOutput = summation
-			print()
-		# "up-hill" move
+			# print()
+		### -------- "up-hill" move --------
 		else:
 			prob = min(math.exp(-(newSummation-summation)/T), 1)
-			# if isResponseViolate:
-			# 	prob = prob / 2
-			print(f'\tSum = {summation} New Sum = {newSummation} / Prob = {prob}')
+			# print(f'\tSum = {summation} New Sum = {newSummation} / Prob = {prob}')
 			
 			# Take the chance to go up hill
 			if random.random() <= prob:
 				dataList = copy.deepcopy(newDataList)
 				summation = newSummation
-				print(f'\tuphill: {summation}')
-				# print(f'\t{dataList}')
-		print()
+				# print(f'\tuphill: {summation}')
+		# print()
 
 		T = T * reduceRate
 
