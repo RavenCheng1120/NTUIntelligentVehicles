@@ -73,8 +73,8 @@ if __name__ == '__main__':
 
 	# Summation of the worst-case response times of all messages. The objective is to minimize it.
 	summation, newSummation = 0, 0
-	T = 10000000000
-	reduceRate = 0.1
+	T = 1000
+	reduceRate = 0.97
 	isResponseViolate = False
 	finalOutput = 0
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
 
 	### -------- Simulated Annealing --------
-	while T > 0:
+	while T > 0.0001:
 		newDataList = SwapPriority(n, dataList)
 		tempR = 0
 		newSummation = 0
@@ -110,33 +110,41 @@ if __name__ == '__main__':
 		### -------- "down-hill" move --------
 		if newSummation <= summation:
 			# Violated the constraint, make it harder to go down hill in this direction
-			if isResponseViolate:
-				# print("Constraint violation")
-				T = T * reduceRate
-				continue
-				# prob = min(math.exp(-(summation-newSummation)*10000/T), 1)
-				# if random.random() <= prob:
-				# 	print()
-				# 	continue
+			if isResponseViolate: # Constraint violation
+				prob = min(math.exp(-(summation-newSummation+2000)/T), 1)
+				if random.random() <= prob: # go
+					print(f'\tNO Sum = {summation} New Sum = {newSummation} / Prob = {prob}')
+				else: # don't go
+					# T = T * reduceRate
+					continue
+			else:
+				print(f'\tOK Sum = {summation} New Sum = {newSummation}')
 
 			dataList = copy.deepcopy(newDataList)
 			summation = newSummation
-			# print(f'downhill: {summation}')
 
 			if isResponseViolate == False and finalOutput > summation:
 				finalOutput = summation
-			# print()
 		### -------- "up-hill" move --------
 		else:
-			prob = min(math.exp(-(newSummation-summation)/T), 1)
-			# print(f'\tSum = {summation} New Sum = {newSummation} / Prob = {prob}')
+			if isResponseViolate == False:
+				prob = min(math.exp(-(newSummation-summation)/T), 1)
+			else:
+				prob = min(math.exp(-(newSummation-summation+2000)/T), 1)
+
 			
 			# Take the chance to go up hill
-			if random.random() <= prob:
+			if random.random() <= prob: # go
+				if isResponseViolate: # Constraint violation
+					print(f'\tV Sum = {summation} New Sum = {newSummation} / Prob = {prob}')
+				else:
+					print(f'\tG Sum = {summation} New Sum = {newSummation} / Prob = {prob}')
+					# T = T * reduceRate
 				dataList = copy.deepcopy(newDataList)
 				summation = newSummation
-				# print(f'\tuphill: {summation}')
-		# print()
+				
+			if isResponseViolate == False and finalOutput > summation:
+				finalOutput = summation
 
 		T = T * reduceRate
 
